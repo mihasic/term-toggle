@@ -29,8 +29,13 @@ private enum Defaults {
     static let hotKeySignature: OSType = 0x5454_474C  // 'TTGL'
     static let hotKeyID: UInt32 = 1
 
-    /// Per-session agent variables, never worth handing down to the target.
-    static let poisonedEnvironmentPrefixes = ["CLAUDE", "_CLAUDE", "ANTHROPIC", "_ANTHROPIC", "AI_AGENT"]
+    /// Per-session variables from whatever shell started us: an agent's, or the
+    /// terminal's own. Never worth handing down to the target.
+    static let poisonedEnvironmentPrefixes = [
+        "CLAUDE", "_CLAUDE", "ANTHROPIC", "_ANTHROPIC", "AI_AGENT",
+        "AGTERM_", "GHOSTTY_", "ITERM_", "KITTY_", "WEZTERM_", "TMUX", "ZELLIJ", "STARSHIP_SESSION_KEY",
+        "TERM_PROGRAM", "TERM_SESSION_ID", "TERMINFO", "COLORTERM", "SHLVL", "OLDPWD",
+    ]
 }
 
 private let log = Logger(subsystem: "com.mihasic.term-toggle", category: "toggle")
@@ -72,6 +77,17 @@ private enum Options {
 }
 
 Options.parse()
+
+// MARK: - Environment
+
+/// LaunchServices hands a cold-launched target our own environment, and
+/// `OpenConfiguration.environment` only adds to it. So scrub ours instead: started
+/// from a shell (`open -a TermToggle` inside a Claude Code session, say), we would
+/// otherwise pass that session down, and the terminal would think it is inside it.
+for key in ProcessInfo.processInfo.environment.keys
+where Defaults.poisonedEnvironmentPrefixes.contains(where: key.hasPrefix) {
+    unsetenv(key)
+}
 
 // MARK: - Settings
 
@@ -231,10 +247,6 @@ private func showOrLaunch(_ target: Target) {
     let configuration = NSWorkspace.OpenConfiguration()
     configuration.activates = true
     configuration.createsNewApplicationInstance = false
-    // Only consulted on a cold launch; a running app keeps its own env.
-    configuration.environment = ProcessInfo.processInfo.environment.filter { key, _ in
-        !Defaults.poisonedEnvironmentPrefixes.contains { key.hasPrefix($0) }
-    }
     NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, error in
         if let error {
             log.error("openApplication failed: \(error.localizedDescription, privacy: .public)")
