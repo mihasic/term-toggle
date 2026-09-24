@@ -112,9 +112,9 @@ the one-modifier muscle memory; its only cost is the grave-accent dead key (⌥`
 → à). Also taken: ⌘` (cycle windows in an app), ⌘Space (Spotlight), ⌥Space
 (Raycast/Alfred), ⌃Space (input source, IDE completion).
 
-If it exits with *"could not register"*, something else already owns that combination.
-Two apps cannot share one hotkey, and the loser fails silently — so give your
-terminal's own quick-terminal binding a **different** chord. In Ghostty's config:
+If it exits with *"could not register"*, another TermToggle copy already owns that
+combination. Any other app that grabs the same chord wins or loses **silently** — so
+give your terminal's own quick-terminal binding a **different** chord. In Ghostty's config:
 
 ```
 keybind = global:ctrl+shift+grave_accent=toggle_quick_terminal
@@ -132,6 +132,7 @@ TermToggle --state            print the detected state of the target app
 TermToggle --config           print the resolved settings and where they came from
 TermToggle --login-status     print the login-item registration status
 TermToggle --unregister       remove from login items
+TermToggle --no-login-item    run as agent without registering as a login item
 TermToggle --version
 TermToggle --help
 
@@ -172,7 +173,9 @@ DMG, publishes it, and updates [`Casks/term-toggle.rb`](Casks/term-toggle.rb).
   Monitoring grant. A `CGEvent` tap would prompt on first run and lose the grant on
   every rebuild, since TCC keys on the code signature.
 - **Two apps cannot share a combo, and the loser fails silently.** Both registrations
-  return `noErr`; only the first one to register receives the key.
+  return `noErr`; only the first one to register receives the key. TermToggle registers
+  with `kEventHotKeyExclusive`, which catches only another exclusive registrant — i.e.
+  a second TermToggle copy.
 - **A quick-terminal panel is a separate window class.** `NSApplication.hide()` does
   not hide it, so ⌥` will not put away a lone Ghostty quick terminal or kitty
   quick-access window. Out of scope by design.

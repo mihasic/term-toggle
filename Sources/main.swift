@@ -298,10 +298,13 @@ private func registerHotKey(_ hotkey: Hotkey) -> Bool {
     }
 
     let id = EventHotKeyID(signature: Defaults.hotKeySignature, id: Defaults.hotKeyID)
+    // Exclusive: a second TermToggle copy fails loudly instead of silently.
+    // Other apps register non-exclusively, so their conflicts still go unseen.
     let status = RegisterEventHotKey(
-        hotkey.keyCode, hotkey.modifiers, id, GetApplicationEventTarget(), 0, &hotKeyRef)
+        hotkey.keyCode, hotkey.modifiers, id, GetApplicationEventTarget(),
+        OptionBits(kEventHotKeyExclusive), &hotKeyRef)
     guard status == noErr else {
-        // -9868 (eventHotKeyExistsErr) means somebody else already owns the chord.
+        // -9878 (eventHotKeyExistsErr): another TermToggle copy owns the chord.
         log.error("RegisterEventHotKey failed: \(status)")
         return false
     }
@@ -363,6 +366,7 @@ if commands.contains("--help") || commands.contains("-h") {
       --config               print the resolved settings and where they came from
       --login-status         print the login-item registration status
       --unregister           remove from login items
+      --no-login-item        run the agent without registering as a login item
       --version              print the version
       --help                 this message
 
@@ -448,7 +452,7 @@ let application = NSApplication.shared
 application.setActivationPolicy(.accessory)
 
 guard registerHotKey(hotkey) else {
-    fputs("TermToggle: could not register \(hotkey.label) — is another app using it?\n", stderr)
+    fputs("TermToggle: could not register \(hotkey.label) — is another TermToggle running?\n", stderr)
     exit(1)
 }
 
