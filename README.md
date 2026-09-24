@@ -28,11 +28,13 @@ panel rather than your real windows. This fills that gap.
 brew tap mihasic/term-toggle https://github.com/mihasic/term-toggle
 brew trust mihasic/term-toggle
 brew install --cask term-toggle
+open -a TermToggle
 ```
 
-Homebrew 6 requires the explicit `brew trust` for any tap outside the official ones.
+Homebrew requires the explicit `brew trust` for any tap outside the official ones, and
+sandboxes cask install steps, so it cannot start the app for you.
 
-That's it — ⌥` works immediately, and TermToggle starts at login from then on.
+⌥` works as soon as it's open, and TermToggle starts at login from then on.
 macOS may ask you to approve it once under **System Settings → General → Login
 Items & Extensions**.
 
@@ -42,6 +44,7 @@ Requires macOS 13 (Ventura) or later. Apple Silicon and Intel.
 
 ```sh
 brew upgrade --cask term-toggle
+open -a TermToggle
 ```
 
 ### Uninstall

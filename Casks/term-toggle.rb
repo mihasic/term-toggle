@@ -13,10 +13,10 @@ cask "term-toggle" do
   app "TermToggle.app"
 
   # Ad-hoc signed, not notarized: strip the download quarantine or Gatekeeper
-  # refuses to launch it. Then start it, so the hotkey works without a reboot.
+  # refuses to launch it. Homebrew 7 sandboxes install steps, so it cannot
+  # also `open` the app for us — the caveat asks the user to.
   postflight_steps do
     run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/TermToggle.app"]
-    run "/usr/bin/open", args: ["{{appdir}}/TermToggle.app"]
   end
 
   uninstall quit:   "com.mihasic.term-toggle",
@@ -24,4 +24,9 @@ cask "term-toggle" do
               executable: "#{appdir}/TermToggle.app/Contents/MacOS/TermToggle",
               args:       ["--unregister"],
             }
+
+  caveats <<~EOS
+    Start it now (after an install or upgrade); it starts at login from then on:
+      open -a TermToggle
+  EOS
 end

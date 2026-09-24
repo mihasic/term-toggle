@@ -47,6 +47,7 @@ jobs:
           brew tap mihasic/term-toggle https://github.com/mihasic/term-toggle
           brew trust mihasic/term-toggle
           brew install --cask term-toggle
+          open -a TermToggle
           ```
 
           The app is ad-hoc signed, not notarized. The cask clears the download
