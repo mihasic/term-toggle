@@ -38,7 +38,7 @@ sandboxes cask install steps, so it cannot start the app for you.
 macOS may ask you to approve it once under **System Settings → General → Login
 Items & Extensions**.
 
-Requires macOS 13 (Ventura) or later. Apple Silicon and Intel.
+Requires macOS 13 (Ventura) or later. Apple Silicon only.
 
 ### Upgrade
 
@@ -167,7 +167,7 @@ invocation per architecture — no Xcode project, no SwiftPM, no dependencies.
 fails silently.
 
 Releases are cut by tagging: `git tag v$(cat VERSION) && git push origin v$(cat VERSION)`.
-[`.github/workflows/release.yml`](.github/workflows/release.yml) builds the universal
+[`.github/workflows/release.yml`](.github/workflows/release.yml) builds the Apple Silicon
 DMG, publishes it, and updates [`Casks/term-toggle.rb`](Casks/term-toggle.rb).
 
 ## Design notes

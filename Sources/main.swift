@@ -33,7 +33,8 @@ private enum Defaults {
     /// terminal's own. Never worth handing down to the target.
     static let poisonedEnvironmentPrefixes = [
         "CLAUDE", "_CLAUDE", "ANTHROPIC", "_ANTHROPIC", "AI_AGENT",
-        "AGTERM_", "GHOSTTY_", "ITERM_", "KITTY_", "WEZTERM_", "TMUX", "ZELLIJ", "STARSHIP_SESSION_KEY",
+        "AGTERM_", "GHOSTTY_", "ITERM_", "KITTY_", "WEZTERM_", "ALACRITTY_", "WARP_", "WT_", "VSCODE_",
+        "TMUX", "ZELLIJ", "STARSHIP_SESSION_KEY",
         "TERM_PROGRAM", "TERM_SESSION_ID", "TERMINFO", "COLORTERM", "SHLVL", "OLDPWD",
     ]
 }
@@ -43,12 +44,19 @@ private let log = Logger(subsystem: "com.mihasic.term-toggle", category: "toggle
 // MARK: - Command line
 
 /// Parsed before the settings below resolve, because a flag outranks them all.
-private enum Options {
-    static var app: String?
-    static var hotkey: String?
-    static var commands: Set<String> = []
+private struct Options {
+    var app: String?
+    var hotkey: String?
+    var commands: Set<String> = []
 
-    static func parse() {
+    /// Checked at parse time, so a typo fails even alongside an early-exit command.
+    static let knownCommands: Set<String> = [
+        "--toggle", "--state", "--config", "--login-status", "--unregister",
+        "--no-login-item", "--version", "--help", "-h",
+    ]
+
+    static func parse() -> Options {
+        var options = Options()
         var arguments = Array(CommandLine.arguments.dropFirst())
         while let argument = arguments.first {
             arguments.removeFirst()
@@ -68,15 +76,19 @@ private enum Options {
                 return next
             }
             switch name {
-            case "--app", "-a": app = value()
-            case "--hotkey", "-k": hotkey = value()
-            default: commands.insert(name)
+            case "--app", "-a": options.app = value()
+            case "--hotkey", "-k": options.hotkey = value()
+            case _ where knownCommands.contains(name): options.commands.insert(name)
+            default:
+                fputs("TermToggle: unknown option \(name) — see --help\n", stderr)
+                exit(2)
             }
         }
+        return options
     }
 }
 
-Options.parse()
+private let options = Options.parse()
 
 // MARK: - Environment
 
@@ -105,6 +117,7 @@ private let preferences: UserDefaults =
         : UserDefaults(suiteName: Defaults.domain) ?? .standard
 
 /// Flag → environment → preferences → built-in default.
+@MainActor
 private func setting(flag: String?, env: String, key: String, fallback: String) -> (String, Source) {
     if let flag { return (flag, .flag) }
     if let value = ProcessInfo.processInfo.environment[env], !value.isEmpty { return (value, .environment) }
@@ -113,9 +126,9 @@ private func setting(flag: String?, env: String, key: String, fallback: String) 
 }
 
 private let (appSpec, appSource) = setting(
-    flag: Options.app, env: "TERM_TOGGLE_APP", key: "app", fallback: Defaults.app)
+    flag: options.app, env: "TERM_TOGGLE_APP", key: "app", fallback: Defaults.app)
 private let (hotkeySpec, hotkeySource) = setting(
-    flag: Options.hotkey, env: "TERM_TOGGLE_HOTKEY", key: "hotkey", fallback: Defaults.hotkey)
+    flag: options.hotkey, env: "TERM_TOGGLE_HOTKEY", key: "hotkey", fallback: Defaults.hotkey)
 
 // MARK: - Target app
 
@@ -186,6 +199,7 @@ private let keyCodes: [String: Int] = {
     let functionKeys = [
         kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6,
         kVK_F7, kVK_F8, kVK_F9, kVK_F10, kVK_F11, kVK_F12,
+        kVK_F13, kVK_F14, kVK_F15, kVK_F16, kVK_F17, kVK_F18, kVK_F19, kVK_F20,
     ]
     for (index, code) in functionKeys.enumerated() { table["f\(index + 1)"] = code }
     return table
@@ -255,6 +269,7 @@ private func showOrLaunch(_ target: Target) {
 }
 
 /// The whole point of the app. Called from the Carbon handler and from `--toggle`.
+@MainActor
 private func toggle() {
     guard let target = resolveTarget(appSpec) else {
         log.error("cannot resolve app: \(appSpec, privacy: .public)")
@@ -293,10 +308,12 @@ private let hotKeyHandler: EventHandlerUPP = { _, event, _ in
     guard status == noErr, received.id == Defaults.hotKeyID else {
         return OSStatus(eventNotHandledErr)
     }
-    toggle()
+    // Carbon dispatches on the main thread, from the run loop `application.run()` drives.
+    MainActor.assumeIsolated { toggle() }
     return noErr
 }
 
+@MainActor
 private func registerHotKey(_ hotkey: Hotkey) -> Bool {
     var spec = EventTypeSpec(
         eventClass: OSType(kEventClassKeyboard),
@@ -355,7 +372,7 @@ private func unregisterLoginItem() {
 
 // MARK: - Entry point
 
-private let commands = Options.commands
+private let commands = options.commands
 
 if commands.contains("--version") {
     // Set from ./VERSION at build time; only present when run inside the bundle.
@@ -434,11 +451,6 @@ if commands.contains("--config") {
 if commands.contains("--state") {
     print(stateDescription(target))
     exit(0)
-}
-
-if let unknown = commands.first(where: { $0 != "--toggle" && $0 != "--no-login-item" }) {
-    fputs("TermToggle: unknown option \(unknown) — see --help\n", stderr)
-    exit(2)
 }
 
 guard let target else {

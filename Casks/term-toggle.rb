@@ -8,6 +8,7 @@ cask "term-toggle" do
   desc "Global hotkey to show, hide, or launch a terminal"
   homepage "https://github.com/mihasic/term-toggle"
 
+  depends_on arch: :arm64
   depends_on macos: :ventura
 
   app "TermToggle.app"

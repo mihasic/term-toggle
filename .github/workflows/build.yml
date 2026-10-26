@@ -1,0 +1,29 @@
+name: build
+
+# Catches a broken build (or a runner image bump that breaks it) before a release tag does.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: ./build.sh --no-install
+
+      - name: Smoke test
+        run: |
+          bin=build/TermToggle.app/Contents/MacOS/TermToggle
+          "$bin" --version
+          "$bin" --config
+          if "$bin" --config --bogus 2>/dev/null; then
+            echo "::error::unknown option was accepted"
+            exit 1
+          fi
