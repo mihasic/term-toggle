@@ -1,7 +1,7 @@
 # Updated automatically by .github/workflows/release.yml on each tagged release.
 cask "term-toggle" do
-  version "0.1.3"
-  sha256 "ce3f4fc031c8a4da52effcf1b7ba145ca074c623cc053a9c31d9e37e770862eb"
+  version "0.1.4"
+  sha256 "477a1cdcff3fb41d625679874f2e43d85e0d0ed7e8e51d5ac9ff20362769125b"
 
   url "https://github.com/mihasic/term-toggle/releases/download/v#{version}/TermToggle-#{version}.dmg"
   name "TermToggle"
