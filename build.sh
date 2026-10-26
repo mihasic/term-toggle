@@ -31,17 +31,13 @@ echo "==> Cleaning $BUILD_DIR"
 rm -rf "$BUILD_DIR"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-echo "==> Compiling $APP_NAME $VERSION (arm64 + x86_64, target macOS $DEPLOYMENT_TARGET)"
-for arch in arm64 x86_64; do
-	swiftc -O \
-		-target "${arch}-apple-macos${DEPLOYMENT_TARGET}" \
-		-framework AppKit -framework Carbon -framework ServiceManagement \
-		-o "$BUILD_DIR/$APP_NAME.$arch" \
-		Sources/main.swift
-done
-lipo -create -output "$APP/Contents/MacOS/$APP_NAME" \
-	"$BUILD_DIR/$APP_NAME.arm64" "$BUILD_DIR/$APP_NAME.x86_64"
-rm -f "$BUILD_DIR/$APP_NAME.arm64" "$BUILD_DIR/$APP_NAME.x86_64"
+echo "==> Compiling $APP_NAME $VERSION (arm64, Swift 6, target macOS $DEPLOYMENT_TARGET)"
+# Apple Silicon only: macOS 26 was the last release for Intel Macs.
+swiftc -O -swift-version 6 \
+	-target "arm64-apple-macos${DEPLOYMENT_TARGET}" \
+	-framework AppKit -framework Carbon -framework ServiceManagement \
+	-o "$APP/Contents/MacOS/$APP_NAME" \
+	Sources/main.swift
 
 echo "==> Assembling bundle"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
