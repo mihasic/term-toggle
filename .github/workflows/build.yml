@@ -3,7 +3,7 @@ name: build
 # Catches a broken build (or a runner image bump that breaks it) before a release tag does.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 permissions:
