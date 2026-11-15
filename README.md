@@ -11,7 +11,7 @@ launch your terminal, from anywhere in macOS.
 | Running with no windows | Brings it up **and** opens a new window |
 
 Any app works; the built-in target is [Ghostty](https://ghostty.org). Point it at
-iTerm2, kitty, or anything else with one `defaults write` — see
+iTerm2, kitty, Rex, or anything else with one `defaults write` — see
 [Configuration](#configuration).
 
 It runs in the background: no Dock icon, no menu bar item, no windows, and no
@@ -94,7 +94,17 @@ to a bundle (`~/Applications/kitty.app`). Common ids:
 | Ghostty (built-in default) | `com.mitchellh.ghostty` |
 | iTerm2 | `com.googlecode.iterm2` |
 | kitty | `net.kovidgoyal.kitty` |
+| Rex (including Rex Beta) | `com.superlogical.rex` |
 | Apple Terminal | `com.apple.Terminal` |
+
+For Rex:
+
+```sh
+defaults write com.mihasic.term-toggle app com.superlogical.rex
+```
+
+Then restart TermToggle as shown above. Rex session environment variables (`REX_…`)
+are cleared before launching a target, so it does not inherit the originating session.
 
 `hotkey` is modifier words joined by `+`, then a base key: `ctrl`, `opt` (`alt`),
 `shift`, `cmd`, and a key name — `a`–`z`, `0`–`9`, `grave`, `space`, `tab`, `return`,

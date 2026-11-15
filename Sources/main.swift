@@ -33,7 +33,7 @@ private enum Defaults {
     /// terminal's own. Never worth handing down to the target.
     static let poisonedEnvironmentPrefixes = [
         "CLAUDE", "_CLAUDE", "ANTHROPIC", "_ANTHROPIC", "AI_AGENT",
-        "AGTERM_", "GHOSTTY_", "ITERM_", "KITTY_", "WEZTERM_", "ALACRITTY_", "WARP_", "WT_", "VSCODE_",
+        "AGTERM_", "REX_", "GHOSTTY_", "ITERM_", "KITTY_", "WEZTERM_", "ALACRITTY_", "WARP_", "WT_", "VSCODE_",
         "TMUX", "ZELLIJ", "STARSHIP_SESSION_KEY",
         "TERM_PROGRAM", "TERM_SESSION_ID", "TERMINFO", "COLORTERM", "SHLVL", "OLDPWD",
     ]
